@@ -33,10 +33,9 @@ local function getCurrentJobName()
 end
 
 -----------------------------------------------------------------------
--- Find correct LuAshitacast folder (Stutter-Free Native Scan)
+-- Find correct LuAshitacast folder 
 -----------------------------------------------------------------------
 local function findProfileFolder()
-    -- Index 0 is always safely populated with your own character name
     local char = AshitaCore:GetMemoryManager():GetParty():GetMemberName(0)
     if not char or char == "" then
         print(chat.header(addon.name):append(chat.message('\31\123Could not get character name.')))
@@ -45,7 +44,6 @@ local function findProfileFolder()
 
     local base = string.format('%sconfig\\addons\\LuAshitacast\\', AshitaCore:GetInstallPath())
     
-    -- Keep the native stutter-free folder indexing
     local directories = ashita.fs.get_directory(base)
     if not directories then
         print(chat.header(addon.name):append(chat.message('\31\123Failed to read LuAshitacast directory.')))
