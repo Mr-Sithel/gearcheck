@@ -21,7 +21,7 @@
     ```
 - **Search:** Cross-references equipable items with active gear containers (Inventory & Wardrobes). If items are not able to be equipped (Safe, Locker, Satchel, etc.) it will let you know their location so that you can grab them.
 - **Color-Coded Feedback:** Prints a sorted list to the chat log prioritizing completely missing items (`Not Found`) followed by items in storage.
-- **Case & Spelling Senitive Matching:** Ex. Matches `Tpl. Cyclas +1` not (`Temple Cyclas +1` or `temple cyclas +1`)
+- **Case & Spelling Sensitive Matching:** Ex. Matches `Tpl. Cyclas +1` not (`Temple Cyclas +1` or `temple cyclas +1`)
 
 ### Screenshots
 
