@@ -24,9 +24,11 @@
 - **Case & Spelling Sensitive Matching:** 
 
     Matches format of items in game, example.
+
     ${\textsf{\color{green}{Tpl. Cyclas +1}}}$
 
     **NOT** 
+    
     ${\textsf{\color{red}{Temple Cyclas +1}}}$ or ${\textsf{\color{red}{temple cyclas +1}}}$
 
 ### Screenshots
