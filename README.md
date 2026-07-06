@@ -22,10 +22,12 @@
 - **Search:** Cross-references equipable items with active gear containers (Inventory & Wardrobes). If items are not able to be equipped (Safe, Locker, Satchel, etc.) it will let you know their location so that you can grab them.
 - **Color-Coded Feedback:** Prints a sorted list to the chat log prioritizing completely missing items (`Not Found`) followed by items in storage.
 - **Case & Spelling Sensitive Matching:** 
+
     Matches format of items in game, example.
-    <span style="color:green">Tpl. Cyclas +1</span> 
+    ${\textsf{\color{green}{Tpl. Cyclas +1}}}$
+
     **NOT** 
-    <span style="color:red">Temple Cyclas +1</span> or <span style="color:red">temple cyclas +1</span>
+    ${\textsf{\color{red}{Temple Cyclas +1}}}$ or ${\textsf{\color{red}{temple cyclas +1}}}$
 
 ### Screenshots
 
