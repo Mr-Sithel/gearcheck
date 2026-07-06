@@ -24,9 +24,9 @@
 
 ### Screenshots
 
-![gc1]()
+![gc1](https://github.com/Mr-Sithel/gearcheck/blob/main/Example1.png?raw=true)
 
-![gc2]()
+![gc2](https://github.com/Mr-Sithel/gearcheck/blob/main/Example2.png?raw=true)
 
 ### Commands
 
