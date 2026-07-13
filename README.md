@@ -6,6 +6,10 @@
 - Identifies missing equipment and tells you exactly which storage container (Safe, Storage, Satchel, etc.) it was left in.
 - Zero automation, it's parsing gear to make sure you have them on your character, if not it tells you the location to grab them from.
 
+### Added
+- Added: ImGui Window to show parsed gear/items, or has commands to print to chat parsed gear/items.
+- Added: 7 colored themes.
+
 ### Features
 - **Gear Tracking:** Parses your LuAshitacast `.lua` profile line-by-line to extract standard equipment slots.
 - **Item Tracking:** Track custom items (`Item1` through `Item20` by creating a set called gearcheck).
@@ -36,6 +40,10 @@
 ![gc1](https://github.com/Mr-Sithel/gearcheck/blob/main/Example1.png?raw=true)
 
 ![gc2](https://github.com/Mr-Sithel/gearcheck/blob/main/Example2.png?raw=true)
+
+Version 1.1+
+
+![gc2](https://github.com/Mr-Sithel/gearcheck/blob/main/Example3.png?raw=true)
 
 ### Commands
 

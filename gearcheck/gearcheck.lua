@@ -1,13 +1,40 @@
-addon.name = 'GearCheck'
-addon.author = 'Sithel'
-addon.version = '1.0'
+addon.name    = 'GearCheck'
+addon.author  = 'Sithel'
+addon.version = '1.1'
 
 require('common')
-local chat        = require('chat')
+local chat     = require('chat')
+local imgui    = require('imgui')
+local settings = require('settings')
 
 local inventory = AshitaCore:GetMemoryManager():GetInventory()
 local resources = AshitaCore:GetResourceManager()
 
+-----------------------------------------------------------------------
+-- XIUI Theme Loader
+-----------------------------------------------------------------------
+local default_settings = T{
+    theme = 'gold',
+}
+local gearcheck_settings = settings.load(default_settings)
+
+local function loadTheme(name)
+    return require('data/theme_' .. name)
+end
+
+local theme = loadTheme(gearcheck_settings.theme)
+
+settings.register('settings', 'gearcheck_settings_update', function(new_settings)
+    gearcheck_settings = new_settings
+end)
+
+local function SaveSettings()
+    settings.save()
+end
+
+-----------------------------------------------------------------------
+-- Containers
+-----------------------------------------------------------------------
 local MAIN_CONTAINERS = {0, 8, 10, 11, 12, 13, 14, 15, 16}
 local OTHER_CONTAINERS = {
     {id=1, name='Safe'},
@@ -17,6 +44,18 @@ local OTHER_CONTAINERS = {
     {id=6, name='Sack'},
     {id=7, name='Case'},
     {id=3, name='Temporary'},
+}
+
+-----------------------------------------------------------------------
+-- UI State
+-----------------------------------------------------------------------
+local ui_state = {
+    is_open      = { true },
+    results      = {},
+    current_job  = ' - ',
+    parsed_count = 0,
+    activeTab    = 1,
+    error_message = nil,
 }
 
 -----------------------------------------------------------------------
@@ -33,7 +72,7 @@ local function getCurrentJobName()
 end
 
 -----------------------------------------------------------------------
--- Find correct LuAshitacast folder 
+-- Find LuAshitacast folder
 -----------------------------------------------------------------------
 local function findProfileFolder()
     local char = AshitaCore:GetMemoryManager():GetParty():GetMemberName(0)
@@ -43,31 +82,24 @@ local function findProfileFolder()
     end
 
     local base = string.format('%sconfig\\addons\\LuAshitacast\\', AshitaCore:GetInstallPath())
-    
     local directories = ashita.fs.get_directory(base)
     if not directories then
         print(chat.header(addon.name):append(chat.message('\31\123Failed to read LuAshitacast directory.')))
         return nil
     end
 
-    local targetFolder = nil
     for _, folder in ipairs(directories) do
         if folder:lower():find(char:lower()) then
-            targetFolder = folder
-            break
+            return base .. folder .. '\\'
         end
     end
 
-    if not targetFolder then
-        print(string.format('\31\5GearCheck: \31\123Could not locate LuAshitacast folder for %s.', char))
-        return nil
-    end
-
-    return base .. targetFolder .. '\\'
+    print(string.format('\31\5GearCheck: \31\123Could not locate LuAshitacast folder for %s.', char))
+    return nil
 end
 
 -----------------------------------------------------------------------
--- Parsing Luashitacast profiles for gear
+-- Parse LuAshitacast profile
 -----------------------------------------------------------------------
 local function parseProfileSets(path, job)
     local file = io.open(path, 'r')
@@ -84,21 +116,15 @@ local function parseProfileSets(path, job)
         Back=true, Waist=true, Legs=true, Feet=true,
     }
 
-    -- Scan the entire file line by line
     for line in text:gmatch("[^\r\n]+") do
         local cleanLine = line:gsub("%s*%-%-.*$", "")
-
         if cleanLine ~= "" then
             local slot = cleanLine:match("%s*([%w_]+)%s*=")
-            
-            -- Matches standard slots OR dynamic custom item keys (Item1 through Item20)
             if slot and (validSlots[slot] or slot:match("^Item%d+$")) then
                 local protectedLine = cleanLine:gsub("\\'", "\001")
-                
                 for rawItem in protectedLine:gmatch("'([^']+)'") do
                     if rawItem ~= "Name" then
                         local item = rawItem:gsub("\001", "'"):gsub("\\", ""):gsub("^%s*(.-)%s*$", "%1")
-                        
                         local resItem = resources:GetItemByName(item)
                         if resItem ~= nil then
                             gearNeeded[item] = 1
@@ -109,24 +135,14 @@ local function parseProfileSets(path, job)
         end
     end
 
-    -------------------------------------------------------------------
-    -- Print parsed count
-    -------------------------------------------------------------------
     local count = 0
     for _ in pairs(gearNeeded) do count = count + 1 end
 
-    local msg = string.format(
-        '\31\207Parsed \31\204%d \31\207items from profile \31\204%s\31\207.lua',
-        count,
-        job or 'JOB'
-    )
-
-    print(chat.header(addon.name):append(chat.message(msg)))
     return gearNeeded
 end
 
 -----------------------------------------------------------------------
--- Load profile (text parse only)
+-- Load profile
 -----------------------------------------------------------------------
 local function loadProfile(job)
     local folder = findProfileFolder()
@@ -158,7 +174,7 @@ local function scanContainers(containerList)
 end
 
 -----------------------------------------------------------------------
--- Find item location in other containers
+-- Find item location
 -----------------------------------------------------------------------
 local function findItemLocation(itemName)
     for _,c in ipairs(OTHER_CONTAINERS) do
@@ -176,7 +192,17 @@ local function findItemLocation(itemName)
 end
 
 -----------------------------------------------------------------------
--- Main gearcheck logic
+-- Clear UI Parse
+-----------------------------------------------------------------------
+local function ui_clear()
+    ui_state.results = {}
+    ui_state.parsed_count = 0
+    ui_state.current_job = "-"
+    ui_state.error_message = {}
+end
+
+-----------------------------------------------------------------------
+-- Chat GearCheck 
 -----------------------------------------------------------------------
 local function gearcheck(job)
     local gearNeeded = loadProfile(job)
@@ -187,42 +213,207 @@ local function gearcheck(job)
 
     local gearFound = scanContainers(MAIN_CONTAINERS)
     local missing = {}
-    local missingColor = '\31\38'
-    local locColor     = '\31\06'
-    local itemColor    = '\31\36'
 
     for itemName,_ in pairs(gearNeeded) do
         if not gearFound[itemName] then
             local loc = findItemLocation(itemName)
-            local locText = loc and (locColor .. loc) or (missingColor .. 'Not Found')
-
-            table.insert(missing,
-                string.format('%s\31\01 - %s%s', locText, itemColor, itemName)
-            )
+            local locText = loc and ('\31\06' .. loc) or '\31\38Not Found'
+            table.insert(missing, string.format('%s\31\01 - \31\36%s', locText, itemName))
         end
     end
 
     if #missing == 0 then
         print(chat.header(addon.name):append(chat.message('\31\204All gear/items accounted for.')))
     else
-        -------------------------------------------------------------------
-        -- Sort order
-        -------------------------------------------------------------------
-        table.sort(missing, function(a, b)
-            -- Changed internal string scanning to search for 'Not Found'
-            local aNotFound = a:find('Not Found')
-            local bNotFound = b:find('Not Found')
-
-            if aNotFound and not bNotFound then return false end
-            if bNotFound and not aNotFound then return true end
-            return a < b
-        end)
-    
+        table.sort(missing)
         for _,line in ipairs(missing) do
             print('\31\200' .. line)
         end
     end
 end
+
+-----------------------------------------------------------------------
+-- UI Validation 
+-----------------------------------------------------------------------
+local function ui_validate(job)
+    ui_state.results = {}
+    ui_state.current_job = job
+
+    local gearNeeded = loadProfile(job)
+    if not gearNeeded then
+        ui_state.parsed_count = 0
+        ui_state.results = {}
+        ui_state.error_message = "NO JOB PROFILE FOUND!\n\nEnsure LuAshitaCast is installed and a\nprofile exists for this job.\n\nPath:\n\n...config\\addons\\LuAshitacast\\\n   <charname>\\<job>.lua"
+        return
+    end
+
+    ui_state.error_message = nil
+
+
+    local gearFound = scanContainers(MAIN_CONTAINERS)
+
+    local count = 0
+    for _ in pairs(gearNeeded) do count = count + 1 end
+    ui_state.parsed_count = count
+
+    for itemName,_ in pairs(gearNeeded) do
+        if not gearFound[itemName] then
+            local loc = findItemLocation(itemName)
+            table.insert(ui_state.results, {
+                item = itemName,
+                location = loc or "Not Found",
+                is_found = loc ~= nil
+            })
+        end
+    end
+
+    table.sort(ui_state.results, function(a, b)
+        if a.is_found ~= b.is_found then
+            return a.is_found
+        end
+        return a.item < b.item
+    end)
+end
+
+-----------------------------------------------------------------------
+-- ImGui Window
+-----------------------------------------------------------------------
+ashita.events.register('d3d_present', 'gearcheck_ui_render', function()
+    if not ui_state.is_open[1] then return end
+
+    imgui.SetNextWindowSize({300, 455}, ImGuiCond_Always)
+
+    theme.push()
+
+    if imgui.Begin('GearCheck', ui_state.is_open) then
+
+        -- Validate Button
+        if imgui.Button('Validate Current Job', { -1, 24 }) then
+            local job = getCurrentJobName()
+            if job then
+                ui_validate(job)
+            else
+                ui_state.current_job = "Unknown"
+            end
+        end
+
+        -- Clear Button
+        if imgui.Button('Clear', { -1, 24 }) then
+            ui_clear()
+        end
+
+        -- Settings Button
+        if imgui.Button('Settings', { -1, 24 }) then
+            ui_state.activeTab = 2
+        end
+
+        imgui.Separator()
+
+        ---------------------------------------------------------
+        -- TAB 1: RESULTS
+        ---------------------------------------------------------
+        if ui_state.activeTab == 1 then
+
+            imgui.Text('Job Profile:')
+            imgui.SameLine()
+            imgui.TextColored(theme.colors.good, ui_state.current_job)
+
+            imgui.Text('Total Profile Items Parsed:')
+            imgui.SameLine()
+            imgui.TextColored(theme.colors.good, tostring(ui_state.parsed_count))
+
+            imgui.Separator()
+
+            imgui.BeginChild('ResultsList', { -1, -1 })
+
+            if ui_state.error_message then
+                imgui.TextColored(theme.colors.bad, ui_state.error_message)
+                imgui.EndChild()
+                imgui.End()
+                theme.pop()
+                return
+            end
+
+            if #ui_state.results == 0 and ui_state.parsed_count > 0 then
+                imgui.TextColored(theme.colors.good, "All Gear / Items accounted for.")
+            else
+                for _, res in ipairs(ui_state.results) do
+                    if res.is_found then
+                        imgui.TextColored(theme.colors.good, string.format('[%s]', res.location))
+                    else
+                        imgui.TextColored(theme.colors.bad, '[Not Found]')
+                    end
+                    imgui.SameLine(90)
+                    imgui.Text(res.item)
+                end
+            end
+
+            imgui.EndChild()
+
+        ---------------------------------------------------------
+        -- TAB 2: SETTINGS
+        ---------------------------------------------------------
+        else
+            imgui.Text("Theme")
+            imgui.SameLine()
+            imgui.TextDisabled("(?)")
+            if imgui.IsItemHovered() then
+                imgui.SetTooltip("Choose a color theme for GearCheck.")
+            end
+
+            local themes = { 'blue', 'gold', 'red', 'gray' }
+            local current = gearcheck_settings.theme
+
+            imgui.PushItemWidth(140)
+            if imgui.BeginCombo("##gc_theme_select", current) then
+                for _, t in ipairs(themes) do
+                    local selected = (t == current)
+                    if imgui.Selectable(t, selected) then
+                        gearcheck_settings.theme = t
+                        SaveSettings()
+                        theme = loadTheme(t)
+                    end
+                    if selected then imgui.SetItemDefaultFocus() end
+                end
+                imgui.EndCombo()
+            end
+            imgui.PopItemWidth()
+            imgui.Spacing()
+            imgui.Separator()
+            imgui.Spacing()
+
+            imgui.Text("Print Commands:")
+            imgui.TextDisabled("/gc ui")
+            if imgui.IsItemHovered() then
+                imgui.SetTooltip("Opens UI Window")
+            end
+            imgui.TextDisabled("/gc validate")
+            if imgui.IsItemHovered() then
+                imgui.SetTooltip("(Validates Current Job)")
+            end
+            imgui.TextDisabled("/gc <job>")
+            if imgui.IsItemHovered() then
+                imgui.SetTooltip("Ex. /gc sam (Manually validates SAM Job Profile)")
+            end
+
+            imgui.Spacing()
+            imgui.Text("Disclaimer:")
+            imgui.TextDisabled("Parses LuAshitaCast job profiles\nto determine gear needed for your\ncurrent job.")
+            imgui.TextDisabled("Manually move missing gear, nothing\nis automatically moved or equipped.")
+            imgui.Separator()
+            imgui.Spacing()
+
+
+            if imgui.Button("Back to Results", { -1, 24 }) then
+                ui_state.activeTab = 1
+            end
+        end
+
+        imgui.End()
+    end
+
+    theme.pop()
+end)
 
 -----------------------------------------------------------------------
 -- Command handler
@@ -234,36 +425,74 @@ ashita.events.register('command', 'gearcheck_cmd', function(e)
     local cmd = args[1]:lower()
     if cmd ~= '/gearcheck' and cmd ~= '/gc' then return end
 
+    -- UI toggle
+    if args[2] and args[2]:lower() == 'ui' then
+        ui_state.is_open[1] = not ui_state.is_open[1]
+        return true
+    end
+
+    -- Validate current job (chat)
     if args[2] and args[2]:lower() == 'validate' then
         local jobName = getCurrentJobName()
         if not jobName then
             print(chat.header(addon.name):append(chat.message('\31\123Could not determine your current job.')))
-            --print(chat.header(addon.name):append(chat.message('\31\204/anon \31\207is the issue...')))
             return true
+        end
+        local gearNeeded = loadProfile(jobName)
+        if gearNeeded then
+            local count = 0
+            for _ in pairs(gearNeeded) do count = count + 1 end
+
+            print(chat.header(addon.name):append(chat.message(
+                string.format('\31\207Parsed \31\204%d \31\207items from profile \31\204%s.lua', count, jobName)
+            )))
         end
 
         gearcheck(jobName)
         return true
     end
 
+    -- Manual job
     if args[2] then
         local manualJob = args[2]:upper()
-        -- Handle shorthand verification
-        local valid = resources:GetString("jobs.names_abbr", manualJob)
-        if not valid then
-            -- Fallback verification check against actual game resources structure
+        local jobId = nil
+
+        -- Validate job abbreviation
+        for id = 1, 22 do
+            local abbr = resources:GetString("jobs.names_abbr", id)
+            if abbr and abbr:upper() == manualJob then
+                jobId = id
+                break
+            end
+        end
+
+        if not jobId then
             print(string.format('\31\200GearCheck: Unknown job "%s".', manualJob))
             return true
         end
 
-        gearcheck(manualJob)
+        -- Convert jobId → jobName (THF, MNK, etc.)
+        local jobName = resources:GetString("jobs.names_abbr", jobId)
+
+        local gearNeeded = loadProfile(jobName)
+        if gearNeeded then
+            local count = 0
+            for _ in pairs(gearNeeded) do count = count + 1 end
+
+            print(chat.header(addon.name):append(chat.message(
+                string.format('\31\207Parsed \31\204%d \31\207items from profile \31\204%s.lua', count, jobName)
+            )))
+        end
+
+        gearcheck(jobName)
         return true
     end
 
+    -- Help
     print(chat.header(addon.name):append(chat.message('\31\207Commands:')))
-    print('\31\207 /gearcheck or /gc')
-    print('\31\207 /gc validate \31\204(validate current job)')
-    print('\31\207 /gc <job> \31\204(Ex: /gc sam)')
+    print('\31\207 /gc validate')
+    print('\31\207 /gc ui')
+    print('\31\207 /gc <job>')
 
     return true
 end)
