@@ -1,14 +1,16 @@
 ### GearCheck
-- A lightweight inventory and gear parse utility for Ashita version 4+
+- A lightweight inventory and gear parse utility for Ashita version 4.30
 
 ### Overview
 - Automatically scans your active inventory against your LuAshitacast profiles to verify you have all required gear on hand.
 - Identifies missing equipment and tells you exactly which storage container (Safe, Storage, Satchel, etc.) it was left in.
 - Zero automation, it's parsing gear to make sure you have them on your character, if not it tells you the location to grab them from.
+- This has no affiliation with LuashitaCast other than parsing gear from it's job profiles you create.
 
 ### Added
 - Added: ImGui Window to show parsed gear/items, or has commands to print to chat parsed gear/items.
 - Added: 7 colored themes.
+- Added: Option in the settings tab to Auto-Open UI on job change.
 
 ### Features
 - **Gear Tracking:** Parses your LuAshitacast `.lua` profile line-by-line to extract standard equipment slots.
@@ -24,8 +26,8 @@
     };
     ```
 - **Search:** Cross-references equipable items with active gear containers (Inventory & Wardrobes). If items are not able to be equipped (Safe, Locker, Satchel, etc.) it will let you know their location so that you can grab them.
-- **Color-Coded Feedback:** Prints a sorted list to the chat log prioritizing completely missing items (`Not Found`) followed by items in storage.
-- **Case & Spelling Sensitive Matching:** 
+- **Color-Coded Feedback:** Prints a sorted list to the chat log prioritizing completely missing items [`Not Found`] followed by items in storage.
+- **Case & Spelling Sensitive Matching:** If an item is mis-spelled it will show as [`Spell Check`]
 
     Matches format of items in game, example.
 
