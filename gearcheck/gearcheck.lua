@@ -373,7 +373,7 @@ ashita.events.register('d3d_present', 'gearcheck_ui_render', function()
     if not ui_state.is_open[1] then return end
     updateActiveTheme()
     if not theme then return end
-    imgui.SetNextWindowSize({300, 485}, ImGuiCond_Always)
+    imgui.SetNextWindowSize({340, 540}, ImGuiCond_Always)
     theme.push()
 
     if imgui.Begin('GearCheck', ui_state.is_open) then
