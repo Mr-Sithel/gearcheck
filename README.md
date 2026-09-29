@@ -7,6 +7,13 @@
 - Zero automation, it's parsing gear to make sure you have them on your character, if not it tells you the location to grab them from.
 - This has no affiliation with LuashitaCast other than parsing gear from it's job profiles you create.
 
+### Private Server Approval
+
+| Server | Status | Date |
+| :--- | :--- | :--- |
+| **HorizonXI** | ${\textsf{\color{orange}{Pending}}}$ | -- |
+| **PhoenixXI** | ${\textsf{\color{orange}{Pending}}}$ | -- |
+
 ### Added
 - Added: ImGui Window to show parsed gear/items, or has commands to print to chat parsed gear/items.
 - Added: 7 colored themes.
@@ -55,8 +62,9 @@ Version 1.1+
 
 ### Installation
 
-* Download and unzip the addon into your Ashita addons directory.
-* Addon directory is: `...\Game\addons\GearCheck`
+* Download and unzip the correct version of PocketPets at https://github.com/Mr-Sithel/gearcheck/releases
+* Copy the `gearcheck` folder from inside of the `GearCheck-(X.X.X)` folder into your Ashita addons directory
+* Addon example directory : `HorizonXI\Game\addons` or `PhoenixXI\addons`
 * This was created for `Ashita (Interface v4.30)`
 * You can load the addon by typing `/addon load GearCheck`. It is recommended to add this line to your `scripts/default.txt` file to load it automatically on startup.
 
