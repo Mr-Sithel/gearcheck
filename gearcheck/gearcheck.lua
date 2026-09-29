@@ -1,6 +1,6 @@
 addon.name    = 'GearCheck'
 addon.author  = 'Sithel'
-addon.version = '1.3'
+addon.version = '1.3.1'
 
 require('common')
 local chat     = require('chat')
@@ -19,7 +19,7 @@ local user_settings = settings.load(default_settings)
 
 -- Load Theme Helper
 local function loadTheme(name)
-    return require('data/theme_' .. name)
+    return require('themes/theme_' .. name)
 end
 
 local current_loaded_theme_name = nil
