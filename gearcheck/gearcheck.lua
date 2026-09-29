@@ -440,7 +440,7 @@ ashita.events.register('d3d_present', 'gearcheck_ui_render', function()
                             imgui.EndTooltip()
                         end
                     end
-                    imgui.SameLine(95)
+                    imgui.SameLine(0, 8)
                     imgui.Text(res.item)
                 end
             end
