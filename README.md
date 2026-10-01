@@ -12,7 +12,7 @@
 | Server | Status | Date |
 | :--- | :--- | :--- |
 | **HorizonXI** | ${\textsf{\color{orange}{Pending}}}$ | -- |
-| **PhoenixXI** | ${\textsf{\color{orange}{Pending}}}$ | -- |
+| **PhoenixXI** | ${\textsf{\color{green}{Approved}}}$ | 09-30-2026 |
 
 ### Added
 - Added: ImGui Window to show parsed gear/items, or has commands to print to chat parsed gear/items.
