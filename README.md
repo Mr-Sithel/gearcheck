@@ -11,7 +11,7 @@
 
 | Server | Status | Date |
 | :--- | :--- | :--- |
-| **HorizonXI** | ${\textsf{\color{orange}{Pending}}}$ | -- |
+| **HorizonXI** | ${\textsf{\color{green}{Approved}}}$ | 10-07-2026 |
 | **PhoenixXI** | ${\textsf{\color{green}{Approved}}}$ | 09-30-2026 |
 
 ### Added
